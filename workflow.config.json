@@ -1,0 +1,109 @@
+{
+  "workflow_description": {
+    "name":"structural_var_call",
+    "version": 1.0,
+    "label":"Structural variant calling 3",
+    "type":"var_call",
+    "inputs":[
+      "mapped/{sample}.bam*"
+    ],
+    "outputs":[
+      "variant_calls/*",
+      "final_SV_calls/*",
+      "reports/final_report.html"
+    ],
+    "inputs_optional":[
+      "cohort_data/cohort_cnv_info.tar.gz"
+    ],
+    "report_index": "reports/final_report.html",
+    "reports":[
+      "reports/final_report.html"
+    ]
+  },
+  "general_params": [
+    "entity_name",
+    "sample_name"
+  ],
+  "requested_params": [
+    "reference",
+    "lib_ROI"
+  ],
+  "gui_params" : {
+    "primary": {
+      "tumor_normal_paired": {
+        "label": "Tumor-normal paired samples",
+        "type": "bool",
+        "default": false
+      }
+    },
+    "detailed": {
+      "wgs_bin_size": {
+        "label": "Bin size to split genome to in WGS",
+        "type": "int",
+        "default": 50000
+      },
+      "use_gatk_cnv": {
+        "label": "Use GATK_cnv for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_cnvkit": {
+        "label": "Use CNVkit for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_jabCoNtool": {
+        "label": "Use jabCoNtool for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_control_freec": {
+        "label": "Use Control-FREEC for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_manta": {
+        "label": "Use Manta for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_gridss": {
+        "label": "Use GRIDSS for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_delly": {
+        "label": "Use Delly2 for variant calling.",
+        "type": "bool",
+        "default": true
+      },
+      "use_cohort_data": {
+        "label": "Load coverage data from previous experiments for normal estimation. Need file: cohort_data/cohort_cnv_info.tar.gz",
+        "type": "bool",
+        "default": false
+      },
+      "create_cohort_data": {
+        "label": "Save info about coverage data to the cohort_cnv_info file. (include loaded cohort data)",
+        "type": "bool",
+        "default": true
+      }
+    },
+    "samples": {
+      "donor": {
+        "label": "Patient ID",
+        "type": "string",
+        "default": ""
+      },
+      "tumor_normal": {
+        "label": "Tumor or normal",
+        "type": "enum",
+        "default": "normal",
+        "list": {
+          "tumor": "tumor",
+          "normal": "normal"
+        }
+      }
+    }
+  }
+}
+
