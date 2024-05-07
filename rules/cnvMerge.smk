@@ -1,26 +1,27 @@
-rule cnvExonMerge:
+
+rule cnvMerge:
     input:
         tsv=expand("variant_calls/{{sample}}/{cnv_caller}/{cnv_caller}_CNV_{{sample}}.tsv",cnv_caller=used_SV_callers),
-        gtf="/home/rj/4TB/CEITEC/GTFs_GRCh37/gencode.v41lift37.basic.annotation.gtf"  #upravit
     output:
-        bed="CNV_exon_merged/{sample}.callers_merged.bed",
-        tsv="CNV_exon_merged/{sample}.callers_merged.tsv"
+        bed="CNV_merged/{sample}.callers_merged.bed",
+        tsv="CNV_merged/{sample}.callers_merged.tsv"
     log:
-        "logs/{sample}/cnvExonMerge/cnvExonMerge.log"
+        "logs/{sample}/cnvMerge/cnvMerge.log"
     threads: 6
     conda:
-        "../wrappers/cnvExonMerge/env.yaml"
+        "../wrappers/cnvExonMerge/env.yaml" #stejne jako u cnvExonMerge
     script:
-        "../wrappers/cnvExonMerge/script.py"
+        "../wrappers/cnvMerge/script.py"
+
 
 
 snake_dir = workflow.basedir
 rule classifyCNV:
     input:
-        bed="CNV_exon_merged/{sample}.callers_merged.bed",
+        bed="CNV_merged/{sample}.callers_merged.bed",
     output:
-        txt="CNV_exon_merged/{sample}.classified.txt",
-        dir=directory("CNV_exon_merged/{sample}/")
+        txt="CNV_merged/{sample}.classified.txt",
+        dir=directory("CNV_merged/{sample}/")
     log:
         "logs/{sample}/classifyCNV/classifyCNV.log"
     threads: 6
@@ -28,21 +29,20 @@ rule classifyCNV:
         "../wrappers/classifyCNV/env.yaml"
     shell:
         """
-
         python3 {snake_dir}/wrappers/classifyCNV/ClassifyCNV/ClassifyCNV.py --infile {input.bed} --outdir {output.dir} --GenomeBuild hg19 --precise
         cp {output.dir}/Scoresheet.txt {output.txt}
         """
 
-rule cnvAnnotateExons:
+rule cnvAnnotate:
     input:
-        tsv="CNV_exon_merged/{sample}.callers_merged.tsv",
-        txt="CNV_exon_merged/{sample}.classified.txt"
+        tsv="CNV_merged/{sample}.callers_merged.tsv",
+        txt="CNV_merged/{sample}.classified.txt"
     output:
-        tsv="CNV_exon_merged/{sample}_final.tsv"
+        tsv="CNV_merged/{sample}_final.tsv"
     log:
-        "logs/{sample}/cnvAnnotateExons/cnvAnnotateExons.log"
+        "logs/{sample}/cnvAnnotate/cnvAnnotate.log"
     threads: 6
     conda:
-        "../wrappers/cnvAnnotateExons/env.yaml"
+        "../wrappers/cnvAnnotate/env.yaml"
     script:
-        "../wrappers/cnvAnnotateExons/script.py"
+        "../wrappers/cnvAnnotate/script.py"

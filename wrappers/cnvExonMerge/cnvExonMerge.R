@@ -61,7 +61,7 @@ run_all <- function(args){
       cnvkitDF <- cnvkitDF[cnvkitDF$chromosome %in% listofCHR2,]
       cnvkitDF$CALLER <- "cnvkit"
       
-    }else{cnvkit <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
+    }else{cnvkitDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
   }else{
     cnvkitDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )
   }
@@ -71,13 +71,15 @@ run_all <- function(args){
     cnmopsDF <- fread(file=cnmops, sep='\t', header = TRUE)
     if(nrow(cnmopsDF)){
       
+      setnames(cnmopsDF,c("seqnames"),c("chromosome"))
+      
       cnmopsDF <- cnmopsDF[cnmopsDF$chromosome %in% listofCHR2,]
       cnmopsDF$CALLER <- "cnmops"
       
       cnmopsDF <- subset(cnmopsDF,select=c("chromosome","start","end","CALLER","CN"))
       cnmopsDF$CN <- as.numeric(gsub("CN","",cnmopsDF$CN))
       
-    }else{cnmops <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
+    }else{cnmopsDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
   }else{
     cnmopsDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )
   }
@@ -97,7 +99,7 @@ run_all <- function(args){
       exomedepthDF <- subset(exomedepthDF,select=c("chromosome","start","end","CALLER","CN"))
       
       
-    }else{exomedepth <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
+    }else{exomedepthDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
   }else{
     exomedepthDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )
   }
@@ -117,13 +119,12 @@ run_all <- function(args){
       
       
       
-    }else{panelcnmops <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
+    }else{panelcnmopsDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )}
   }else{
     panelcnmopsDF <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"CALLER"=character() )
   }
   
   
-
   ############################################################################################################################################################
   ## MERGE WITH EXONS
   
@@ -146,11 +147,15 @@ run_all <- function(args){
   panelcnmopsDF$chromosome <- as.character(panelcnmopsDF$chromosome)
   data.table::setDT(panelcnmopsDF)
   data.table::setkey(panelcnmopsDF, chromosome,start,end)
-
+  
   #new ALL CNVs together
-  overlapCNMOPS <- data.table::foverlaps(gtf_df_all,cnmopsDF, by.x = c("chromosome","start","end"), mult="all",type="any",nomatch=NULL, which=FALSE)
-  overlapPANELCNMOPS <- data.table::foverlaps(gtf_df_all,panelcnmopsDF, by.x = c("chromosome","start","end"), mult="all",type="any",nomatch=NULL, which=FALSE)
-  overlapEXOMEDEPTH <- data.table::foverlaps(gtf_df_all,exomedepthDF, by.x = c("chromosome","start","end"), mult="all",type="any",nomatch=NULL, which=FALSE)
+  if(nrow(cnmopsDF)){  overlapCNMOPS <- data.table::foverlaps(gtf_df_all,cnmopsDF, by.x = c("chromosome","start","end"), mult="all",type="any",nomatch=NULL, which=FALSE)
+  }else{overlapCNMOPS <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"exon_id"=character(),"CN"=numeric() ) }
+  if(nrow(panelcnmopsDF)){  overlapPANELCNMOPS <- data.table::foverlaps(gtf_df_all,panelcnmopsDF, by.x = c("chromosome","start","end"), mult="all",type="any",nomatch=NULL, which=FALSE)
+  }else{overlapCNMOPS <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"exon_id"=character(),"CN"=numeric() ) }
+  if(nrow(exomedepthDF)){  overlapEXOMEDEPTH <- data.table::foverlaps(gtf_df_all,exomedepthDF, by.x = c("chromosome","start","end"), mult="all",type="any",nomatch=NULL, which=FALSE)
+  }else{overlapCNMOPS <- data.table("chromosome"=character(),"start"=numeric(),"end"=numeric(),"exon_id"=character(),"CN"=numeric() ) }
+  
   
   
   #######################################################################################################################
@@ -159,7 +164,7 @@ run_all <- function(args){
   gtf_df_all$CNMOPS <- NA
   gtf_df_all$exomeDepth <- NA
   
-
+  
   all_exons <- c(overlapCNMOPS$exon_id,overlapPANELCNMOPS$exon_id,overlapEXOMEDEPTH$exon_id)
   EXONS <- gtf_df_all[gtf_df_all$exon_id %in% all_exons,]
   
@@ -180,6 +185,7 @@ run_all <- function(args){
     
   }
   
+  
   EXONS$Count_Detected <- rowSums(!is.na(EXONS[, 11:13]))
   
   #######################################################################################################################
@@ -197,25 +203,29 @@ run_all <- function(args){
   EXONSfiltered[is.na(EXONSfiltered$type) & EXONSfiltered$panCNMOPS>2 & EXONSfiltered$CNMOPS>2  ,"type"] <- "DUP"
   EXONSfiltered <- EXONSfiltered[!is.na(EXONSfiltered$type),]
   
-  EXONSbed <- EXONSfiltered[,c(1:3,15)]
+  EXONSbed <- EXONSfiltered[,c("chromosome","start","end","type","gene_name")]
   
   #######################################################################################################################
-  dir.create(file.path(getwd(),dirname(bed)), recursive = TRUE)
+  dir.create(file.path(getwd(),dirname(bed)), recursive = TRUE, showWarnings = FALSE)
   write.table(EXONSbed, file=bed, sep = "\t", quote = FALSE,row.names = FALSE, col.names = FALSE )
   write.table(EXONSfiltered, file=tsv, sep = "\t", quote = FALSE,row.names = FALSE, col.names = TRUE )
   
+  
+  #######################################################################################################################
+  
+    
+    
 }
 
 
 
-# setwd("/home/rj/4TB/CNV_DATA_WES/resultsHANKA_TRUSEQEXOME/")
-# 
-# args <- c("CNV_exon_merged/DB9905tumor2017.merged.bed",
-#           "CNV_exon_merged/DB9905tumor2017.merged.tsv",
-#           "/home/rj/4TB/CEITEC/GTFs_GRCh37/gencode.v41lift37.basic.annotation.gtf",
-#           "variant_calls/DB9905tumor2017/cnMOPS/cnMOPS_CNV_DB9905tumor2017.tsv",
-#           "variant_calls/DB9905tumor2017/exomeDepth/exomeDepth_CNV_DB9905tumor2017.tsv",
-#           "variant_calls/DB9905tumor2017/panelcnMOPS/panelcnMOPS_CNV_DB9905tumor2017.tsv")
+# setwd("/mnt/ssd/ssd_1/workspace/ROBIN2/zewen_WES/")
+# args <- c("CNV_exon_merged/14394_17_Tu_red.callers_merged.bed",
+#           "CNV_exon_merged/14394_17_Tu_red.callers_merged.tsv",
+#           "gencode.v42.basic.annotation.gtf.gz",
+#           "variant_calls/14394_17_Tu_red/cnMOPS/cnMOPS_CNV_14394_17_Tu_red.tsv",
+#           "variant_calls/14394_17_Tu_red/exomeDepth/exomeDepth_CNV_14394_17_Tu_red.tsv",
+#           "variant_calls/14394_17_Tu_red/panelcnMOPS/panelcnMOPS_CNV_14394_17_Tu_red.tsv")
 
 # develop and test
 # args <- c("results/CNV_exon_merged/MK0905krev_KAPA.merged.tsv",

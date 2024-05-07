@@ -33,6 +33,9 @@ reference_dict = json.load(f)
 f.close()
 config["organism"] = [organism_name.lower().replace(" ","_") for organism_name in reference_dict.keys() if isinstance(reference_dict[organism_name],dict) and config["reference"] in reference_dict[organism_name].keys()][0]
 
+
+
+
 #### FOLDERS
 reference_directory = os.path.join(GLOBAL_REF_PATH,config["organism"],config["reference"])
 
@@ -57,21 +60,34 @@ if config["use_control_panelcnMOPS"]:
 
 
 wildcard_constraints:
-     tumor_normal = "tumor|normal"
+    tumor_normal = "tumor|normal"
 
 
 ####################################
 # SEPARATE RULES
+include: "rules/prepareExomeCohort.smk"
 include: "rules/cnvExomeCallers.smk"
 include: "rules/cnvMerge.smk"
-# include: "rules/cnvkit.smk"
+include: "rules/cnvExonMerge.smk"
 
 
 
 ####################################
 # RULE ALL
+# SAMPLES_LIST = sample_tab.loc[sample_tab["tumor_normal"]=="tumor"),"sample_name"].to_string(index=False)
+
+if config["tumor_normal_paired"] == True:
+    SAMPLES_LIST = sample_tab.loc[sample_tab["tumor_normal"]=="tumor", "sample_name"]
+else:
+    SAMPLES_LIST = sample_tab.sample_name
+
+print(SAMPLES_LIST)
+
+
 rule all:
     input:
         # merged=expand("CNV_exon_merged/{sample}.callers_merged.tsv", sample=sample_tab.sample_name),
-        tsvs=expand("CNV_exon_merged/{sample}_final.tsv", sample=sample_tab.sample_name)
+        Exons=expand("CNV_exon_merged/{sample}_final.tsv", sample=SAMPLES_LIST),
+        CNVs=expand("CNV_merged/{sample}.callers_merged.tsv", sample=SAMPLES_LIST)
+
 
