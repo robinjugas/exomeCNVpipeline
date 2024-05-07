@@ -65,10 +65,10 @@ wildcard_constraints:
 
 ####################################
 # SEPARATE RULES
-include: "rules/prepareExomeCohort.smk"
+include: "rules/cnvExomeprepareCohort.smk"
 include: "rules/cnvExomeCallers.smk"
-include: "rules/cnvMerge.smk"
-include: "rules/cnvExonMerge.smk"
+include: "rules/cnvExomeMerge.smk"
+include: "rules/cnvExomeExonMerge.smk"
 
 
 
