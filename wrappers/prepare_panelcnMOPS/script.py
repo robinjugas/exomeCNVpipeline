@@ -10,7 +10,7 @@ f = open(log_filename, 'wt')
 f.write("\n##\n## RULE: prepare_panelcnMOPS \n##\n")
 f.close()
 
-command = "Rscript "+os.path.abspath(os.path.dirname(__file__))+"/prepare_panelcnMOPS_wrapper.R "+\
+command = "Rscript "+os.path.abspath(os.path.dirname(__file__))+"/prepare_panelCNMOPS_wrapper.R "+\
             snakemake.input.bed + " " +\
             snakemake.output.Rdata + " " +\
             " ".join(snakemake.input.bams) +\

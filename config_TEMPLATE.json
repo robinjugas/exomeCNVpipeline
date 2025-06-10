@@ -1,0 +1,159 @@
+{
+    "genome": "/home/rj/4TB/CEITEC/GENCODE_v47_GRCh38.p14/GRCh38.primary_assembly.genome.fa",
+    "gtf": "/home/rj/4TB/CEITEC/GENCODE_v47_GRCh38.p14/gencode.v47.primary_assembly.annotation.gtf",
+    "refdict":"/home/rj/4TB/CEITEC/GENCODE_v47_GRCh38.p14/GRCh38.primary_assembly.genome.dict",
+    "bed_file":"/home/rj/4TB/CEITEC/CNV_EXOM_BEDs/exons.GRCh37_TruSeqExome.bed",
+
+
+    "analysis_mode":"reference_cohort",
+
+    "_comment1": "CNV callers to use", 
+
+    "use_control_cnMOPS": true,
+    "use_control_exomeDepth": true,
+    "use_control_panelcnMOPS": true,
+    "use_gatk_cnv": false,
+    "use_cnvkit": false,
+    "use_control_freec": false,
+        
+    "samples": {
+        "1": {
+            "sample_name": "HS_01",
+            "status": ""
+        },
+        "2": {
+            "sample_name": "HS_02",
+            "status": ""
+        },
+        "3": {
+            "sample_name": "HS_03",
+            "status": ""
+        },
+        "4": {
+            "sample_name": "HS_04",
+            "status": ""
+        },
+        "5": {
+            "sample_name": "HS_05",
+            "status": ""
+        },
+        "6": {
+            "sample_name": "HS_06",
+            "status": ""
+        },
+        "7": {
+            "sample_name": "HS_07",
+            "status": ""
+        },
+        "8": {
+            "sample_name": "HS_08",
+            "status": ""
+        },
+        "9": {
+            "sample_name": "HS_09",
+            "status": ""
+        },
+        "10": {
+            "sample_name": "HS_10",
+            "status": ""
+        },
+        "11": {
+            "sample_name": "HS_11",
+            "status": ""
+        },
+        "12": {
+            "sample_name": "HS_12",
+            "status": ""
+        },
+        "13": {
+            "sample_name": "HS_13",
+            "status": ""
+        },
+        "14": {
+            "sample_name": "HS_14",
+            "status": ""
+        },
+        "15": {
+            "sample_name": "HS_15",
+            "status": ""
+        },
+        "16": {
+            "sample_name": "HS_16",
+            "status": ""
+        },
+        "17": {
+            "sample_name": "HS_17",
+            "status": ""
+        },
+        "18": {
+            "sample_name": "HS_18",
+            "status": ""
+        },
+        "19": {
+            "sample_name": "HS_19",
+            "status": ""
+        },
+        "20": {
+            "sample_name": "HS_20",
+            "status": ""
+        },
+        "21": {
+            "sample_name": "HS_21",
+            "status": ""
+        },
+        "22": {
+            "sample_name": "HS_22",
+            "status": ""
+        },
+        "23": {
+            "sample_name": "HS_24",
+            "status": ""
+        },
+        "24": {
+            "sample_name": "HS_25",
+            "status": ""
+        },
+        "25": {
+            "sample_name": "HS_26",
+            "status": ""
+        },
+        "26": {
+            "sample_name": "HS_27",
+            "status": ""
+        },
+        "27": {
+            "sample_name": "HS_28",
+            "status": ""
+        },
+        "28": {
+            "sample_name": "HS_29",
+            "status": ""
+        },
+        "29": {
+            "sample_name": "HS_30",
+            "status": ""
+        },
+        "30": {
+            "sample_name": "HS_31",
+            "status": ""
+        },
+        "31": {
+            "sample_name": "HS_32",
+            "status": ""
+        },
+        "32": {
+            "sample_name": "HS_33",
+            "status": ""
+        },
+        "33": {
+            "sample_name": "HS_34",
+            "status": ""
+        },
+        "34": {
+            "sample_name": "HS_35",
+            "status": ""
+        }
+    },
+    "globalResources": "/home/rj/4TB/CEITEC/",
+    "globalTmpdPath": "tmp"
+}

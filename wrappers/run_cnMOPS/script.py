@@ -12,7 +12,7 @@ f.close()
 
 command = "Rscript "+os.path.abspath(os.path.dirname(__file__))+"/CNMOPS_wrapper.R "+\
             snakemake.input.bam + " " +\
-            snakemake.params.libROI + " " +\
+            snakemake.input.cohort + " " +\
             snakemake.params.sampleName + " " +\
             snakemake.output.tsv +\
             " >> " + log_filename + " 2>&1"

@@ -47,7 +47,7 @@ run_all <- function(args){
   
   BAMcohort <- BAMS
   
-  X_cohort <- countBamListInGRanges(countWindows = exons,
+  X_cohort <- panelcn.mops::countBamListInGRanges(countWindows = exons,
                                     bam.files = BAMcohort, read.width = FALSE)
   
   save(X_cohort,exons,file=Rdata)
@@ -57,14 +57,15 @@ run_all <- function(args){
 
 
 
-# develop and test WES113
-# args <- character(3)
-# args[1] <- "/home/rj/4TB/CNV_DATA/WES113/AT-PRO-07krev.bam"
-# args[2] <- "HyperExome_GRCh38"
-# args[3] <- "AT-PRO-07krev"
-# args[4] <- "/home/rj/4TB/CNV_DATA/WES113/AT-PRO-07krev.tsv"
+# develop and test
+# if (!require("BiocManager", quietly = TRUE))
+#   install.packages("BiocManager")
+# BiocManager::install("panelcn.mops")
+# args <- c("/home/rj/4TB/CEITEC/CNV_EXOM_BEDs/OvarianCancer_GRCh38.bed","cohort_data/panelcnMOPS_customCohort.Rdata","mapped/control_1.bam","mapped/control_2.bam","mapped/control_3.bam","mapped/control_4.bam","mapped/control_5.bam","mapped/control_6.bam","mapped/control_7.bam","mapped/control_8.bam")
+# setwd("/media/rj/Exos8TB/CNV_OVARIA/FFPE/")
 #run as Rscript
 # 
 script_dir <- dirname(sub("--file=", "", commandArgs()[grep("--file=", commandArgs())]))
 args <- commandArgs(trailingOnly = T)
 run_all(args)
+

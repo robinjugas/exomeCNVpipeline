@@ -10,29 +10,30 @@ Sys.setenv("R_ZIPCMD" = "zip")
 run_all <- function(args){
   #read all params as variables
   BAM_file <- args[1]
-  lib_ROI <- args[2]
+  cohort_Rdata <- args[2]
   sampleNameWildCard <- args[3]
   fastaFile <- args[4]
   output_file <- args[5]
   
-  if(lib_ROI=="HyperExome_GRCh38"){
-    Rdata_file <- paste0(script_dir,"/COHORT_exonsHyperExome_exomeDepth.Rdata")
-    load(Rdata_file)
-    exons <- exons.GRCh38
-  }
-  if(lib_ROI=="TruSeq_Exome"){
-    Rdata_file <- paste0(script_dir,"/COHORT_exonsTruSeqExome_exomeDepth.Rdata")
-    load(Rdata_file)
-  }
-  if(lib_ROI=="HyperExome_w_CNVbb_GRCh38"){
-    Rdata_file <- paste0(script_dir,"/COHORT_exonsHyperExome_w_CNVbb_exomeDepth.Rdata")
-    load(Rdata_file)
-    exons <- exons.GRCh38
-  }
-  # if(lib_ROI=="XXX"){
-  #   load("COHORT_exonsXXXX_cn.MOPS.Rdata")
+  # if(lib_ROI=="HyperExome_GRCh38"){
+  #   Rdata_file <- paste0(script_dir,"/COHORT_exonsHyperExome_exomeDepth.Rdata")
+  #   load(Rdata_file)
   #   exons <- exons.GRCh38
   # }
+  # if(lib_ROI=="TruSeq_Exome"){
+  #   Rdata_file <- paste0(script_dir,"/COHORT_exonsTruSeqExome_exomeDepth.Rdata")
+  #   load(Rdata_file)
+  # }
+  # if(lib_ROI=="HyperExome_w_CNVbb_GRCh38"){
+  #   Rdata_file <- paste0(script_dir,"/COHORT_exonsHyperExome_w_CNVbb_exomeDepth.Rdata")
+  #   load(Rdata_file)
+  #   exons <- exons.GRCh38
+  # }
+  if(!cohort_Rdata==""){
+    load(cohort_Rdata)
+    if(exists("exons.GRCh38")){exons <- exons.GRCh38}
+  }else{error("Missing cohort Rdata file")}
+  
   
   
   ##############################################################################
@@ -116,8 +117,9 @@ run_all <- function(args){
 
 
 
-# develop and test WES113
-# args <- character(3)
+# develop and test
+# install.packages(c('aod', 'VGAM'))
+# install.packages("/home/rj/Downloads/ExomeDepth_1.1.16.tar.gz", repos = NULL, type="source")
 # args[1] <- "/home/rj/4TB/CNV_DATA/WES113/AT-PRO-07krev.bam"
 # args[2] <- "HyperExome_GRCh38"
 # args[3] <- "AT-PRO-07krev"

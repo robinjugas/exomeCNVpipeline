@@ -44,7 +44,7 @@ run_all <- function(args){
   
   BAMcohort <- BAMS
   
-  X_cohort <- getBamCounts(bed.frame = exons,
+  X_cohort <- ExomeDepth::getBamCounts(bed.frame = exons,
                            bam.files = BAMcohort,
                            include.chr = FALSE,
                            referenceFasta = FASTA)
@@ -56,15 +56,15 @@ run_all <- function(args){
 
 
 
-# develop and test WES113
-# args <- character(3)
-# args[1] <- "/home/rj/4TB/CNV_DATA/WES113/AT-PRO-07krev.bam"
-# args[2] <- "HyperExome_GRCh38"
-# args[3] <- "AT-PRO-07krev"
-# args[4] <- "/home/rj/4TB/CEITEC/homsap/GRCh38-p10/seq/GRCh38-p10.fa"
-# args[5] <- "/home/rj/4TB/CNV_DATA/WES113/AT-PRO-07krev.tsv"
+# develop and test
+# install.packages(c('aod', 'VGAM'))
+# install.packages("/home/rj/Downloads/ExomeDepth_1.1.16.tar.gz", repos = NULL, type="source")
+# args <- c("/home/rj/4TB/CEITEC/CNV_EXOM_BEDs/OvarianCancer_GRCh38.bed","/home/rj/4TB/CEITEC/homsap/GRCh38/seq/GRCh38.fa","cohort_data/exomeDepth_customCohort.Rdata","mapped/control_1.bam","mapped/control_2.bam","mapped/control_3.bam","mapped/control_4.bam","mapped/control_5.bam","mapped/control_6.bam","mapped/control_7.bam","mapped/control_8.bam")
+# setwd("/media/rj/Exos8TB/CNV_OVARIA/FFPE/")
+
 #run as Rscript
 #
 script_dir <- dirname(sub("--file=", "", commandArgs()[grep("--file=", commandArgs())]))
 args <- commandArgs(trailingOnly = T)
 run_all(args)
+

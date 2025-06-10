@@ -13,7 +13,7 @@ f.close()
 
 command = "Rscript "+os.path.abspath(os.path.dirname(__file__))+"/ExomeDepth_wrapper.R "+\
             snakemake.input.bam + " " +\
-            snakemake.params.libROI + " " +\
+            snakemake.input.cohort + " " +\
             snakemake.params.sampleName + " " +\
             snakemake.input.ref + " " +\
             snakemake.output.tsv +\

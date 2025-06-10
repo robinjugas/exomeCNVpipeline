@@ -11,7 +11,7 @@ f.write("\n##\n## RULE: prepare_exomeDepth \n##\n")
 f.close()
 
 
-command = "Rscript "+os.path.abspath(os.path.dirname(__file__))+"/prepare_exomeDepth_wrapper.R "+\
+command = "Rscript "+os.path.abspath(os.path.dirname(__file__))+"/prepare_ExomeDepth_wrapper.R "+\
             snakemake.input.bed + " " +\
             snakemake.input.ref + " " +\
             snakemake.output.Rdata + " " +\

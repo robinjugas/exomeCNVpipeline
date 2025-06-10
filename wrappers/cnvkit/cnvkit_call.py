@@ -11,26 +11,24 @@ f.close()
 
 shell.executable("/bin/bash")
 
-# call -y -m clonal {input.segment} -v {input.vcf} -o {output.calls} --purity {params.TC} {params.extra}) &> {log}
-# " --purity " + snakemake.params.TC + \
 
-
-if snakemake.params.scope == "wgs" or snakemake.params.scope == "WGS":
+# cnvkit.py call Sample.cns -y -v Sample.vcf -o Sample.call.cns
+if snakemake.params.analysis_mode == "somatic_paired" :
     command = "cnvkit.py call " + \
               snakemake.input.segment + \
-              " --male-reference " + \
-              " -m clonal " + \
+              " -m " + str(snakemake.params.method) + \
               " -v " + snakemake.input.vcf + \
               " -o " + snakemake.output.calls + \
               " >> " + log_filename + " 2>&1"
 else:
     command = "cnvkit.py call " + \
-              snakemake.input.segment + \
-              " --male-reference " + \
-              " -m clonal " + \
-              " -v " + snakemake.input.vcf + \
-              " -o " + snakemake.output.calls + \
-              " >> " + log_filename + " 2>&1"
+                snakemake.input.segment + \
+                " -m " + str(snakemake.params.method) + \
+                " -o " + snakemake.output.calls + \
+                " >> " + log_filename + " 2>&1"
+ # " --male-reference " + \
+
+
 
 f = open(log_filename, 'at')
 f.write("## COMMAND: " + command + "\n")
