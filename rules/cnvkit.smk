@@ -247,7 +247,7 @@ rule cnvkit_export:
         dup_limit=config.get("cnvkit_vcf", {}).get("dup_limit", 2.5),
     log:
         "logs/{sample}/convert_to_vcf.log",
-    threads: 6
+    threads: 3
     conda:
         "../wrappers/cnvkit/env.yaml"
     shell:
@@ -258,15 +258,70 @@ rule cnvkit_export:
     # script:
     #     "../wrappers/cnvkit/cnvkit_vcf.py"
 
-
-rule cnvkit_2tsv:
+########################################################################################################################
+# annotate cnvkit output
+rule cnvkit_vcf2tsv:
     input:
-        bed="variant_calls/{sample}/cnvkit/CNV_calls.bed",
+        vcf="variant_calls/{sample}/cnvkit/CNV_calls.vcf",
     output:
-        tsv="variant_calls/{sample}/cnvkit/cnvkit_CNV_{sample}.tsv"
+        tsv="variant_calls/{sample}/cnvkit/cnvkit_CNV_preannot_{sample}.tsv",
+        bed="variant_calls/{sample}/cnvkit/cnvkit_CNV_preannot_{sample}.bed",
     threads: 3
+    conda:
+        "../wrappers/cnvkit_vcf2tsv/env.yaml"
+    script:
+        "../wrappers/cnvkit_vcf2tsv/script.py"
+
+# loading GFT takes time, multiplied by rules using it
+rule processGTF:
+    input:
+        gtf=config["gtf_file"],
+    output:
+        tsv="processed_GFT.tsv",
+    log:
+        "logs/processed_GFT.log"
+    threads: 20
+    conda:
+        "../wrappers/processGFT/env.yaml"
+    script:
+        "../wrappers/processGFT/script.py"
+
+
+snake_dir = workflow.basedir
+rule classifyCNV_cnvkit:
+    input:
+        bed="variant_calls/{sample}/cnvkit/cnvkit_CNV_preannot_{sample}.bed",
+    output:
+        txt="variant_calls/{sample}/cnvkit/{sample}.classified.txt",
+        dir=directory("variant_calls/{sample}/cnvkit/classifyCNV")
+    params:
+        GenomeBuild=str(config["GenomeBuild"]),
+    log:
+        "logs/{sample}/{sample}_classifyCNV_cnvkit.log"
+    threads: 3
+    conda:
+        "../wrappers/classifyCNV/env.yaml"
     shell:
-        "cp {input.bed} {output.tsv}"
+        """
+        python3 {snake_dir}/wrappers/classifyCNV/ClassifyCNV/ClassifyCNV.py --infile {input.bed} --outdir {output.dir} --GenomeBuild {params.GenomeBuild} --precise
+        cp {output.dir}/Scoresheet.txt {output.txt}
+        """
+
+rule cnvAnnotate_CNVkit:
+    input:
+        tsv="variant_calls/{sample}/cnvkit/cnvkit_CNV_preannot_{sample}.tsv",
+        classifyCNV_txt="variant_calls/{sample}/cnvkit/{sample}.classified.txt",
+        gtf="processed_GFT.tsv",
+    output:
+        tsv="cnvkit_final/{sample}_final_CNVs_annotated.tsv",
+        xlsx="cnvkit_final/{sample}_final_CNVs_annotated.xlsx",
+    log:
+        "logs/{sample}/{sample}_cnvAnnotateCNVkit.log"
+    threads: 3
+    conda:
+        "../wrappers/cnvAnnotate_CNVkit/env.yaml"
+    script:
+        "../wrappers/cnvAnnotate_CNVkit/script.py"
 
 
 ########################################################################################################################

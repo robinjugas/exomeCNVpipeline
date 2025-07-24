@@ -7,12 +7,12 @@ rule cnvTargetRegionsMerge:
         bed="CNV_TargetRegions/{sample}.callers_merged.bed",
         tsv="CNV_TargetRegions/{sample}.callers_merged.tsv"
     log:
-        "logs/{sample}/{sample}_cnvTargetRegionsMerge.log"
+        "logs/{sample}/{sample}_cnvMergeTargetRegions.log"
     threads: 6
     conda:
-        "../wrappers/cnvTargetRegionsMerge/env.yaml"
+        "../wrappers/cnvMergeTargetRegions/env.yaml"
     script:
-        "../wrappers/cnvTargetRegionsMerge/script.py"
+        "../wrappers/cnvMergeTargetRegions/script.py"
 
 
 snake_dir = workflow.basedir
@@ -43,6 +43,6 @@ rule cnvAnnotateTargetRegions:
         "logs/{sample}/{sample}_cnvAnnotateTargetRegions.log"
     threads: 6
     conda:
-        "../wrappers/cnvTargetRegionsMerge/env.yaml"
+        "../wrappers/cnvAnnotateTargetRegions/env.yaml"
     script:
         "../wrappers/cnvAnnotateTargetRegions/script.py"

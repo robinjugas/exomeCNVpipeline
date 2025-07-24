@@ -16,7 +16,9 @@ shell.executable("/bin/bash")
 command = "Rscript " + os.path.abspath(os.path.dirname(__file__))+"/cnvAnnotateWhole.R " +\
     snakemake.input.tsv + " " + \
     snakemake.input.classifyCNV_txt + " " + \
+    snakemake.input.gtf + " " + \
     snakemake.output.tsv + " " + \
+    snakemake.output.xlsx + " " + \
     " >> " + log_filename + " 2>&1"
 
 

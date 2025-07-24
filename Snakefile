@@ -89,9 +89,13 @@ rule all:
     input:
         # TargetRegions_merged=expand("CNV_TargetRegions/{sample}.callers_merged.tsv", sample=SAMPLES_LIST),
         # TargetRegions_annotated=expand("CNV_TargetRegions/{sample}_called_TargetRegions.tsv", sample=SAMPLES_LIST),
-        CNVS_merged=expand("mergedCNVs_final/{sample}_called_CNVs.tsv", sample=SAMPLES_LIST),
+        merged_tsv=expand("mergedCNVs_final/{sample}_final_CNVs_annotated.tsv",sample=SAMPLES_LIST),
+        merged_xlsx=expand("mergedCNVs_final/{sample}_final_CNVs_annotated.xlsx",sample=SAMPLES_LIST),
 
         #cnvkit
+        tsv=expand("cnvkit_final/{sample}_final_CNVs_annotated.tsv",sample=ALL_SAMPLES,status=STATUS),
+        xlsx=expand("cnvkit_final/{sample}_final_CNVs_annotated.xlsx",sample=ALL_SAMPLES,status=STATUS),
+
         targetcoverage=expand("variant_calls/{sample}/cnvkit/{status}.targetcoverage.cnn", sample=ALL_SAMPLES,status=STATUS),
         antitargetcoverage=expand("variant_calls/{sample}/cnvkit/{status}.antitargetcoverage.cnn", sample=ALL_SAMPLES,status=STATUS),
         calls=expand("variant_calls/{sample}/cnvkit/CNV_calls.cns", sample=SAMPLES_LIST),

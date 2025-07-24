@@ -1,5 +1,6 @@
 
 library(data.table)
+library(writexl)
 
 #nemelo by byt napevno... ale s detekci UCSC/Ensembl
 listofCHR<-c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18",
@@ -9,35 +10,60 @@ listofCHR2<-c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15",
               "19","20","21","22","X","Y")
 
 # develop and test
-# setwd("/media/rj/SSD_500GB/CNV_OVARIA/PLAZMY/")
-# args <- c("CNV_Whole/942-23_FFPE.callers_merged.tsv","CNV_Whole/942-23_FFPE.classified.txt","CNV_Whole/942-23_FFPE_called_CNVs.tsv","")
-# args <- c("CNV_Whole/1456-22_FFPE.callers_merged.tsv","CNV_Whole/1456-22_FFPE.classified.txt","CNV_Whole/1456-22_FFPE_called_CNVs.tsv","")
+# setwd("/media/rj/SSD_500GB/CNV_OVARIA/FFPE/")
+# args <- c("CNV_Whole/942-23_FFPE.callers_merged.tsv","CNV_Whole/942-23_FFPE.classified.txt","processed_GFT.tsv","CNV_Whole/942-23_FFPE_called_CNVs.tsv","")
 
 run_all <- function(args){
   # arguments
-  tsv <- args[1]
-  txt <- args[2]
-  output <- args[3]
-
-  ##############################################################################
-  exonsDF <- fread(file=tsv, sep='\t', header = TRUE)
-  names(exonsDF)
-  exonsDF$VariantID <- paste(exonsDF$CHR,exonsDF$START,exonsDF$STOP,exonsDF$CNVtype,sep = "_") # chr1_970657_970704_DEL
+  input_tsv <- args[1]
+  classify_txt <- args[2]
+  gtf_tsv <- args[3]
+  output_tsv <- args[4]
+  output_xlsx <- args[5]
   
   ##############################################################################
+  inputDF <- fread(file=input_tsv, sep='\t', header = TRUE)
+  names(inputDF)
+  
+  # cnvkit variant
+  if(all(c("CHROM","POS","END","SVTYPE") %in% names(inputDF))){
+    setnames(inputDF,c("CHROM","POS","END","SVTYPE"),c("CHR","START","STOP","CNVtype"))
+    inputDF$VariantID <- paste(inputDF$CHR,inputDF$START,inputDF$STOP,inputDF$CNVtype,sep = "_") # chr1_970657_970704_DEL
+  }
+  # MergeWhole variant
+  if(all(c("CHR","START","STOP","CNVtype") %in% names(inputDF))){
+    setnames(inputDF,c("CHR","START","STOP","CNVtype"),c("CHR","START","STOP","CNVtype"))
+    inputDF$VariantID <- paste(inputDF$CHR,inputDF$START,inputDF$STOP,inputDF$CNVtype,sep = "_") # chr1_970657_970704_DEL
+  }
+  
+  names(inputDF)
+  ##############################################################################
   ## DETECT USCS or ENSEMBL
-  if( grepl( "^chr",     exonsDF[1,1], fixed = TRUE) ){
+  if( grepl( "^chr",     inputDF[1,1], fixed = TRUE) ){
     UCSCorENSEMBL <- "ENS"
   }else{UCSCorENSEMBL <- "UCSC"}
   
+  
   ##############################################################################
-  classifyCNV_res <- fread(file=txt, sep='\t', header = TRUE)
+  # PROCESS GTF
+  gtf_df_all <- fread(file=gtf_tsv, sep='\t', header = TRUE)
+  
+  if(UCSCorENSEMBL=="UCSC"){
+    gtf_df_all$chromosome <- gsub("^chr","",gtf_df_all$chromosome) # carefull
+    gtf_df_all <- gtf_df_all[chromosome %in% listofCHR2,]
+  }else{
+    gtf_df_all <- gtf_df_all[chromosome %in% listofCHR,]
+  }
+  
+  setDT(gtf_df_all)
+  
+  
+  ##############################################################################
+  classifyCNV_res <- fread(file=classify_txt, sep='\t', header = TRUE)
   if("Chromosome" %in% names(classifyCNV_res)){setnames(classifyCNV_res,c("Chromosome"),c("CHR"))}
   if("Start" %in% names(classifyCNV_res)){setnames(classifyCNV_res,c("Start"),c("START"))}
   if("End" %in% names(classifyCNV_res)){setnames(classifyCNV_res,c("End"),c("STOP"))}
   if("Type" %in% names(classifyCNV_res)){setnames(classifyCNV_res,c("Type"),c("CNVtype"))}
-  
- 
   
   if(UCSCorENSEMBL=="UCSC"){
     classifyCNV_res$CHR <- gsub("^chr","",classifyCNV_res$CHR) # carefull
@@ -49,30 +75,65 @@ run_all <- function(args){
   
   classifyCNV_res <- classifyCNV_res[,-c(8:42)] # delete categories
   classifyCNV_res[,c("CHR","START","STOP","CNVtype") :=NULL] # delete cause merge columns
-  
+  names(classifyCNV_res)
   ##############################################################################
   # pozor na chr ve sloupci chromosome a VariantID
-  exonsDF <- merge(exonsDF,classifyCNV_res,by="VariantID")
-  exonsDF[,c("VariantID") :=NULL] # delete cause merge columns
+  inputDF <- merge(inputDF,classifyCNV_res,by="VariantID")
+  inputDF$IGV <- paste0(inputDF$CHR,":",inputDF$START,"-",inputDF$STOP) #chr1:144,874-969,268)
   
-  exonsDF$IGV <- paste0(exonsDF$CHR,":",exonsDF$START,"-",exonsDF$STOP) #chr1:144,874-969,268)
+  # names(inputDF)
+  # names(gtf_df_all)
+  # nrow(inputDF)
+  
+  ##############################################################################
+  # Put CHR, START, STOP at the front, keep others in their original order
+  cols_to_front <- c("CHR", "START", "STOP")
+  all_cols <- names(inputDF)
+  remaining_cols <- setdiff(all_cols, cols_to_front)
+  setcolorder(inputDF, c(cols_to_front, remaining_cols))
+  
+  
+  
+  ############################################################################################################################################################
+  ## overlap inputDF and GTF
+  inputDF$CHR <- as.character(inputDF$CHR)
+  gtf_df_all$chromosome <- as.character(gtf_df_all$chromosome)
+  
+  setkey(inputDF, CHR,START,STOP)
+  setkey(gtf_df_all, chromosome,start,end)
+  
+  overlapCNVxGTF <- foverlaps(inputDF, gtf_df_all, by.x = c("CHR","START","STOP"),
+                              by.y = c("chromosome","start","end"), mult="all", type="any", nomatch=NULL, which=FALSE)
+  
+  setkey(overlapCNVxGTF, CHR, START,STOP)
+  overlapCNVxGTF <- unique(overlapCNVxGTF, by = c("CHR","START","STOP","gene_name"))
+  
+  # remove those with ENSG in gene name if there are also duplicate TRUE
+  # overlapCNVxGTF[, duplicate := .N > 1, by = key(overlapCNVxGTF)]
+  # overlapCNVxGTF <- overlapCNVxGTF[!((gene_name %like% "ENSG") & (duplicate==TRUE)),]
+  
+  overlapCNVxGTF[, GFT_genes := paste(gene_name, collapse = ", "), by = VariantID]
+  overlapCNVxGTF <- unique(overlapCNVxGTF, by = c("VariantID"))
+  overlapCNVxGTF[,c("VariantID") :=NULL] # delete cause merge columns
+  
+  names(overlapCNVxGTF)
+  
+  # MergeWhole variant
+  setnames(overlapCNVxGTF,"CNVlength","SVLEN")
+  overlapCNVxGTF <- subset(overlapCNVxGTF,select=c("CHR","START","STOP","CNVtype","SVLEN","IGV",
+                                                   "GFT_genes",
+                                                   "n_CALLERS", "CALLERS", "CN_cnvkit","CN_cnmops","CN_pcnmops",
+                                                   "Classification","Total score","Known or predicted dosage-sensitive genes","All protein coding genes"
+  ))
+  
+  overlapCNVxGTF$SVLEN <- overlapCNVxGTF$STOP-overlapCNVxGTF$START
   
   #######################################################################################################################
-  dir.create(file.path(getwd(),dirname(output)), recursive = TRUE, showWarnings=FALSE)
-  write.table(exonsDF, file=output, sep = "\t", quote = FALSE,row.names = FALSE, col.names = TRUE )
+  dir.create(file.path(getwd(),dirname(output_tsv)), recursive = TRUE, showWarnings=FALSE)
+  write.table(overlapCNVxGTF, file=output_tsv, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE )
+  writexl::write_xlsx(overlapCNVxGTF,path=output_xlsx)
   
 }
-
-
-# setwd("/home/rj/4TB/CNV_DATA_WES/resultsHANKA_TRUSEQEXOME/")
-# 
-# args <- c("CNV_exon_merged/DB9905tumor2017.merged.bed",
-#           "CNV_exon_merged/DB9905tumor2017.merged.tsv",
-#           "/home/rj/4TB/CEITEC/GTFs_GRCh37/gencode.v41lift37.basic.annotation.gtf",
-#           "variant_calls/DB9905tumor2017/cnMOPS/cnMOPS_CNV_DB9905tumor2017.tsv",
-#           "variant_calls/DB9905tumor2017/exomeDepth/exomeDepth_CNV_DB9905tumor2017.tsv",
-#           "variant_calls/DB9905tumor2017/panelcnMOPS/panelcnMOPS_CNV_DB9905tumor2017.tsv")
-
 
 
 #run as Rscript

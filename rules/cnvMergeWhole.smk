@@ -10,9 +10,9 @@ rule cnvWholeMerge:
         "logs/{sample}/{sample}_cnvWholeMerge.log"
     threads: 3
     conda:
-        "../wrappers/cnvWholeMerge/env.yaml"
+        "../wrappers/cnvMergeWhole/env.yaml"
     script:
-        "../wrappers/cnvWholeMerge/script.py"
+        "../wrappers/cnvMergeWhole/script.py"
 
 
 
@@ -23,6 +23,8 @@ rule classifyCNV_whole:
     output:
         txt="CNV_Whole/{sample}.classified.txt",
         dir=directory("CNV_Whole/{sample}/classifyCNV/")
+    params:
+        GenomeBuild=str(config["GenomeBuild"]),
     log:
         "logs/{sample}/{sample}_classifyCNV_TargetRegions.log"
     threads: 3
@@ -30,20 +32,22 @@ rule classifyCNV_whole:
         "../wrappers/classifyCNV/env.yaml"
     shell:
         """
-        python3 {snake_dir}/wrappers/classifyCNV/ClassifyCNV/ClassifyCNV.py --infile {input.bed} --outdir {output.dir} --GenomeBuild hg19 --precise
+        python3 {snake_dir}/wrappers/classifyCNV/ClassifyCNV/ClassifyCNV.py --infile {input.bed} --outdir {output.dir} --GenomeBuild {params.GenomeBuild} --precise
         cp {output.dir}/Scoresheet.txt {output.txt}
         """
 
 rule cnvAnnotateWhole:
     input:
         tsv="CNV_Whole/{sample}.callers_merged.tsv",
-        classifyCNV_txt="CNV_Whole/{sample}.classified.txt"
+        classifyCNV_txt="CNV_Whole/{sample}.classified.txt",
+        gtf="processed_GFT.tsv",
     output:
-        tsv="mergedCNVs_final/{sample}_called_CNVs.tsv"
+        tsv="mergedCNVs_final/{sample}_final_CNVs_annotated.tsv",
+        xlsx="mergedCNVs_final/{sample}_final_CNVs_annotated.xlsx",
     log:
         "logs/{sample}/{sample}_cnvAnnotateWhole.log"
     threads: 3
     conda:
-        "../wrappers/cnvWholeMerge/env.yaml"
+        "../wrappers/cnvAnnotateWhole/env.yaml"
     script:
         "../wrappers/cnvAnnotateWhole/script.py"
