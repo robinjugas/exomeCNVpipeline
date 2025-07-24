@@ -50,10 +50,9 @@ wildcard_constraints:
 # SEPARATE RULES
 include: "rules/cnvPrepareCohort.smk"
 include: "rules/cnvExomeCallers.smk"
-include: "rules/cnvWholeMerge.smk"
-include: "rules/cnvTargetRegionsnMerge.smk"
 include: "rules/cnvkit.smk"
-
+include: "rules/cnvMergeWhole.smk"
+# include: "rules/cnvMergeTargetRegions.smk"
 
 ####################################
 # RULE ALL
@@ -68,8 +67,8 @@ elif config["analysis_mode"] == "baseline":
 else:
     SAMPLES_LIST = sample_tab.sample_name
 
-print("SAMPLES OF INTEREST \n")
-print(SAMPLES_LIST)
+# print("SAMPLES OF INTEREST \n")
+# print(SAMPLES_LIST)
 
 
 
@@ -78,18 +77,20 @@ print(SAMPLES_LIST)
 ALL_SAMPLES = sample_tab.sample_name
 STATUS = sample_tab.status
 
-print("All samples \n")
-print(ALL_SAMPLES)
-print("STATUS of all samples \n")
-print(STATUS)
 
+# print("All samples \n")
+# print(ALL_SAMPLES)
+# print("STATUS of all samples \n")
+# print(STATUS)
 
+sample_tab.to_csv('sample_tab.tsv', sep="\t")
 
 rule all:
     input:
         # TargetRegions_merged=expand("CNV_TargetRegions/{sample}.callers_merged.tsv", sample=SAMPLES_LIST),
         # TargetRegions_annotated=expand("CNV_TargetRegions/{sample}_called_TargetRegions.tsv", sample=SAMPLES_LIST),
-        # CNVS_merged=expand("CNV_Whole/{sample}_called_CNVs.tsv", sample=SAMPLES_LIST),
+        CNVS_merged=expand("mergedCNVs_final/{sample}_called_CNVs.tsv", sample=SAMPLES_LIST),
+
         #cnvkit
         targetcoverage=expand("variant_calls/{sample}/cnvkit/{status}.targetcoverage.cnn", sample=ALL_SAMPLES,status=STATUS),
         antitargetcoverage=expand("variant_calls/{sample}/cnvkit/{status}.antitargetcoverage.cnn", sample=ALL_SAMPLES,status=STATUS),

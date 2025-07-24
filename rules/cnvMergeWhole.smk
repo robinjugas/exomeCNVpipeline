@@ -8,9 +8,9 @@ rule cnvWholeMerge:
         tsv="CNV_Whole/{sample}.callers_merged.tsv"
     log:
         "logs/{sample}/{sample}_cnvWholeMerge.log"
-    threads: 6
+    threads: 3
     conda:
-        "../wrappers/cnvTargetRegionsMerge/env.yaml" #stejne jako u cnvExonMerge
+        "../wrappers/cnvWholeMerge/env.yaml"
     script:
         "../wrappers/cnvWholeMerge/script.py"
 
@@ -25,7 +25,7 @@ rule classifyCNV_whole:
         dir=directory("CNV_Whole/{sample}/classifyCNV/")
     log:
         "logs/{sample}/{sample}_classifyCNV_TargetRegions.log"
-    threads: 6
+    threads: 3
     conda:
         "../wrappers/classifyCNV/env.yaml"
     shell:
@@ -39,11 +39,11 @@ rule cnvAnnotateWhole:
         tsv="CNV_Whole/{sample}.callers_merged.tsv",
         classifyCNV_txt="CNV_Whole/{sample}.classified.txt"
     output:
-        tsv="CNV_Whole/{sample}_called_CNVs.tsv"
+        tsv="mergedCNVs_final/{sample}_called_CNVs.tsv"
     log:
         "logs/{sample}/{sample}_cnvAnnotateWhole.log"
-    threads: 6
+    threads: 3
     conda:
-        "../wrappers/cnvAnnotateWhole/env.yaml"
+        "../wrappers/cnvWholeMerge/env.yaml"
     script:
         "../wrappers/cnvAnnotateWhole/script.py"

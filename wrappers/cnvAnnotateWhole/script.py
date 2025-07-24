@@ -7,13 +7,13 @@ from snakemake.shell import shell
 log_filename = str(snakemake.log)
 
 f = open(log_filename, 'wt')
-f.write("\n##\n## cnvAnnotateTargetRegions \n##\n")
+f.write("\n##\n## cnvAnnotateWhole \n##\n")
 f.close()
 
 shell.executable("/bin/bash")
 
 
-command = "Rscript " + os.path.abspath(os.path.dirname(__file__))+"/cnvAnnotateTargetRegions.R " +\
+command = "Rscript " + os.path.abspath(os.path.dirname(__file__))+"/cnvAnnotateWhole.R " +\
     snakemake.input.tsv + " " + \
     snakemake.input.classifyCNV_txt + " " + \
     snakemake.output.tsv + " " + \

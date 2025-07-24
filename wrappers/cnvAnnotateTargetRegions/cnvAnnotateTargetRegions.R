@@ -8,8 +8,8 @@ listofCHR<-c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr
 listofCHR2<-c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18",
               "19","20","21","22","X","Y")
 # develop and test
-setwd("/media/rj/Exos8TB/CNV_OVARIA/FFPE/")
-args <- c("CNV_TargetRegions/9466-2022_FFPE.callers_merged.tsv","CNV_TargetRegions/9466-2022_FFPE.classified.txt","CNV_TargetRegions/9466-2022_FFPE_called_TargetRegions.tsv","")
+# setwd("/media/rj/Exos8TB/CNV_OVARIA/FFPE/")
+# args <- c("CNV_TargetRegions/9466-2022_FFPE.callers_merged.tsv","CNV_TargetRegions/9466-2022_FFPE.classified.txt","CNV_TargetRegions/9466-2022_FFPE_called_TargetRegions.tsv","")
 
 
 
@@ -33,7 +33,7 @@ run_all <- function(args){
   exonsDF <- merge(exonsDF,classifyCNV_res,by="VariantID")
   exonsDF <- subset(exonsDF, select = -c(VariantID))
   #######################################################################################################################
-  dir.create(file.path(getwd(),dirname(output)), recursive = TRUE)
+  dir.create(file.path(getwd(),dirname(output)), recursive = TRUE, showWarnings=FALSE)
   write.table(exonsDF, file=output, sep = "\t", quote = FALSE,row.names = FALSE, col.names = TRUE )
   
 }

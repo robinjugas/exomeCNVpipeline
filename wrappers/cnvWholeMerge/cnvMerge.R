@@ -1,5 +1,6 @@
 
 suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(GenomicRanges))
 
 #nemelo by byt napevno... ale s detekci UCSC/Ensembl
 listofCHR<-c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18",
@@ -9,8 +10,15 @@ listofCHR2<-c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15",
               "19","20","21","22","X","Y")
 
 # develop and test
-setwd("/media/rj/Exos8TB/CNV_OVARIA/FFPE/")
-args <- c("CNV_Whole/1922-22_FFPE.callers_merged.bed","CNV_Whole/1922-22_FFPE.callers_merged.tsv","/home/rj/4TB/CEITEC/CNV_EXOM_BEDs/OvarianCancer_GRCh38.bed","variant_calls/1922-22_FFPE/cnMOPS/cnMOPS_CNV_1922-22_FFPE.tsv","variant_calls/1922-22_FFPE/exomeDepth/exomeDepth_CNV_1922-22_FFPE.tsv","variant_calls/1922-22_FFPE/panelcnMOPS/panelcnMOPS_CNV_1922-22_FFPE.tsv")
+# setwd("/media/rj/SSD_500GB/CNV_OVARIA/FFPE/")
+# setwd("/media/rj/SSD_500GB/CNV_OVARIA/PLAZMY/")
+# args <- c("CNV_Whole/1922-22_FFPE.callers_merged.bed","CNV_Whole/1922-22_FFPE.callers_merged.tsv","/home/rj/4TB/CEITEC/CNV_EXOM_BEDs/OvarianCancer_GRCh38.bed",
+#           "variant_calls/1922-22_FFPE/cnMOPS/cnMOPS_CNV_1922-22_FFPE.tsv",
+#           "variant_calls/1922-22_FFPE/exomeDepth/exomeDepth_CNV_1922-22_FFPE.tsv",
+#           "variant_calls/1922-22_FFPE/panelcnMOPS/panelcnMOPS_CNV_1922-22_FFPE.tsv",
+#           "variant_calls/1922-22_FFPE/cnvkit/cnvkit_CNV_1922-22_FFPE.tsv"
+#           )
+# args <- c("CNV_Whole/1850-23_plazma.callers_merged.bed","CNV_Whole/1850-23_plazma.callers_merged.tsv","/home/rj/4TB/CEITEC/CNV_EXOM_BEDs/OvarianCancer_capture_targets_GRCh38.bed","variant_calls/1850-23_plazma/cnMOPS/cnMOPS_CNV_1850-23_plazma.tsv","variant_calls/1850-23_plazma/exomeDepth/exomeDepth_CNV_1850-23_plazma.tsv","variant_calls/1850-23_plazma/panelcnMOPS/panelcnMOPS_CNV_1850-23_plazma.tsv")
 
 
 run_all <- function(args){
@@ -19,7 +27,7 @@ run_all <- function(args){
   output_tsv <- args[2]
   bed_file <- args[3]
   tsv_files <- args[4:length(args)]
-  
+  threshold <- 2
   ## DEFAULT VALUES
   numCallers <- length(tsv_files)
   # if(is.na(distanceThreshold)){distanceThreshold <- 100} #default
@@ -46,11 +54,12 @@ run_all <- function(args){
   
   #cnvkit
   if(!identical(cnvkit, character(0))){
-    cnvkitDF <- fread(file=cnvkit, sep='\t', header = TRUE)
+    cnvkitDF <- fread(file=cnvkit, sep='\t', header = FALSE)
+    setnames(cnvkitDF,c("chromosome","start","end","xx","CN"))
     if(nrow(cnvkitDF)){
       
-      cnvkitDF[,gene:=NULL]
-      cnvkitDF <- cnvkitDF[cnvkitDF$cn!=2,]
+      cnvkitDF[,xx:=NULL]
+      cnvkitDF <- cnvkitDF[cnvkitDF$CN!=2,]
       
       if(UCSCorENSEMBL=="UCSC"){
         cnvkitDF$chromosome <- gsub("^chr","",cnvkitDF$chromosome) # carefull
@@ -58,6 +67,11 @@ run_all <- function(args){
       }else{
         cnvkitDF <- cnvkitDF[chromosome %in% listofCHR,]
       }
+      # HANDLE CN AND CNV TYPE
+      cnvkitDF$CN <- as.numeric(gsub("CN","",cnvkitDF$CN))
+      cnvkitDF$TYPE <- "NA"
+      cnvkitDF[cnvkitDF$CN<2,"TYPE"] <- "DEL"
+      cnvkitDF[cnvkitDF$CN>2,"TYPE"] <- "DUP"
       
       cnvkitDF$CALLER <- "cnvkit"
       
@@ -150,8 +164,8 @@ run_all <- function(args){
   }
   
   
-  ######################################################################################################################################################################
-  ######################################################################################################################################################################
+  ##############################################################################
+  ##############################################################################
   ## MERGE WITH EACH OTHER
   
   # deletions - homo/heterezog
@@ -161,186 +175,133 @@ run_all <- function(args){
   cnvkitDF$chromosome <- as.character(cnvkitDF$chromosome)
   setDT(cnvkitDF)
   setkey(cnvkitDF, chromosome,start,end)
-  setnames(cnvkitDF,c("TYPE","CN"),c("TYPE_cnvkit","CN_cnvkit"))
+  setnames(cnvkitDF,c("CN"),c("CN_cnvkit"))
   
   cnmopsDF$chromosome <- as.character(cnmopsDF$chromosome)
   setDT(cnmopsDF)
   setkey(cnmopsDF, chromosome,start,end)
-  setnames(cnmopsDF,c("TYPE","CN"),c("TYPE_cnmops","CN_cnmops"))
+  setnames(cnmopsDF,c("CN"),c("CN_cnmops"))
   
   exomedepthDF$chromosome <- as.character(exomedepthDF$chromosome)
   setDT(exomedepthDF)
   setkey(exomedepthDF, chromosome,start,end)
-  setnames(exomedepthDF,c("TYPE","CN"),c("TYPE_exomedepthDF","CN_exomedepthDF"))
+  setnames(exomedepthDF,c("CN"),c("CN_exomedepthDF"))
   
   panelcnmopsDF$chromosome <- as.character(panelcnmopsDF$chromosome)
   setDT(panelcnmopsDF)
   setkey(panelcnmopsDF, chromosome,start,end)
-  setnames(panelcnmopsDF,c("TYPE","CN"),c("TYPE_pcnmops","CN_pcnmops"))
+  setnames(panelcnmopsDF,c("CN"),c("CN_pcnmops"))
   
   
-  ######################################################################################################################################################################
-  ######################################################################################################################################################################
-  
+  ##############################################################################
+  # COMBINE INTO SINGLE DT
   OVERLAPS <- rbind(cnvkitDF,cnmopsDF,exomedepthDF,panelcnmopsDF,fill=TRUE)
   setDT(OVERLAPS)
-  setnames(OVERLAPS,c("chromosome", "start", "end"),c("CHR", "x.start", "x.stop"))
+  names(OVERLAPS)
   
-  OVERLAPS <- subset(OVERLAPS,select=c("CHR", "x.start", "x.stop"))
+  ##############################################################################
+  # Assuming TYPE column exists in cnv_data
+  sv_types <- unique(OVERLAPS$TYPE)
   
-  OVERLAPS <- unique(OVERLAPS, by=c("CHR", "x.start", "x.stop"))
-  setDT(OVERLAPS)
-  data.table::setkey(OVERLAPS, CHR, x.start, x.stop)
+  # Create an empty list to collect final results
+  final_list <- list()
   
-  ######################################################################################################################################################################
-  # using for loop
-  usedCallers <- c()
-  DTlist <- rbindlist(list())
-  if(length(cnvkit)!=0){usedCallers <- c(usedCallers,"cnvkit"); DTlist <- rbindlist(list(DTlist,cnvkitDF))}
-  if(length(cnmops)!=0){usedCallers <- c(usedCallers,"cnmops");DTlist <- rbindlist(list(DTlist,cnmopsDF))}
-  if(length(exomedepth)!=0){usedCallers <- c(usedCallers,"exomedepth");DTlist <- rbindlist(list(DTlist,exomedepthDF))}
-  if(length(panelcnmops)!=0){usedCallers <- c(usedCallers,"panelcnmops");DTlist <- rbindlist(list(DTlist,panelcnmopsDF))}
+  for (sv in sv_types) {
+    message("Processing SV type: ", sv)
+    
+    # Subset CNVs of current TYPE
+    subset_data <- OVERLAPS[TYPE == sv]
+    
+    # Convert to GRanges
+    gr <- GRanges(seqnames = subset_data$chromosome,
+                  ranges = IRanges(start = subset_data$start, end = subset_data$end),
+                  caller = subset_data$CALLER,
+                  cnCNVkit = subset_data$CN_cnvkit,
+                  cnCNMOPS = subset_data$CN_cnmops,
+                  cnPCNMOPS = subset_data$CN_pcnmops
+    )
+    
+    # Reduce overlapping CNVs
+    reduced_gr <- reduce(gr)
+    
+    # Overlap between reduced and original GRanges
+    overlaps <- findOverlaps(reduced_gr, gr)
+    
+    # Build a data.table of overlapping metadata
+    overlap_dt <- data.table(
+      merged_id = queryHits(overlaps),
+      caller = mcols(gr)$caller[subjectHits(overlaps)],
+      cnCNVkit = mcols(gr)$cnCNVkit[subjectHits(overlaps)],
+      cnCNMOPS = mcols(gr)$cnCNMOPS[subjectHits(overlaps)],
+      cnPCNMOPS = mcols(gr)$cnPCNMOPS[subjectHits(overlaps)]
+    )
+    
+    # Aggregate per merged_id
+    summary_dt <- overlap_dt[, .(
+      callers = list(unique(caller)),
+      n_callers = uniqueN(caller),
+      CN_cnvkit = paste(na.omit(cnCNVkit), collapse = ","),
+      CN_cnmops = paste(na.omit(cnCNMOPS), collapse = ","),
+      CN_pcnmops = paste(na.omit(cnPCNMOPS), collapse = ",")
+    ), by = merged_id]
+    
+    # Apply threshold filter
+    filtered <- summary_dt[n_callers >= threshold]
+    
+    # Get final merged regions
+    final_regions <- reduced_gr[filtered$merged_id]
+    
+    if(nrow(filtered)>0){
+    # Create final dataframe for this TYPE
+      final_df <- data.frame(
+        seqnames = seqnames(final_regions),
+        start = start(final_regions),
+        end = end(final_regions),
+        n_callers = filtered$n_callers,
+        callers = sapply(filtered$callers, paste, collapse = ","),
+        CN_cnvkit = filtered$CN_cnvkit,
+        CN_cnmops = filtered$CN_cnmops,
+        CN_pcnmops = filtered$CN_pcnmops,
+        svtype = sv
+      )
+      
+      final_list[[sv]] <- final_df
+    }else{
+      final_df <- data.frame(
+        seqnames = character(0),
+        start = integer(0),
+        end = integer(0),
+        n_callers = integer(0),
+        callers = character(0),
+        CN_cnvkit = integer(0),
+        CN_cnmops = integer(0),
+        CN_pcnmops = integer(0),
+        svtype =  character(0)
+      )
+      final_list[[sv]] <- final_df
+    }
+    
+  }
+  
+  # Combine all results into one dataframe
+  all_results <- rbindlist(final_list)
+  # length
+  all_results$length <- all_results$end-all_results$start
+  # rename
+  names(all_results)
+  setnames(all_results,
+           c("seqnames","start","end","n_callers","callers","CN_cnvkit","CN_cnmops","CN_pcnmops","svtype","length"),
+           c("CHR","START","STOP","n_CALLERS","CALLERS","CN_cnvkit","CN_cnmops","CN_pcnmops","CNVtype","CNVlength"))
 
-  caller <- usedCallers[1]
-  for(caller in usedCallers){
-    
-    tempDF <- DTlist[CALLER==caller,]
-    setDT(tempDF)
-    data.table::setkey(tempDF, chromosome, start, end)
-    
-    OVERLAPS <- data.table::foverlaps(OVERLAPS,tempDF, by.x = c("CHR", "x.start", "x.stop"), by.y = c("chromosome", "start", "end"), mult="all",type="any",nomatch=NA, which=FALSE)
-    
-    colnames(OVERLAPS) <- gsub("^start$",sprintf("cnmops_START",usedCallers),colnames(OVERLAPS))
-    colnames(OVERLAPS) <- gsub("^end$","cnmops_STOP",colnames(OVERLAPS))
-    # colnames(OVERLAPS) <- gsub("^CALLER$","cnmops_CALLER",colnames(OVERLAPS))
-    
-    data.table::setkey(OVERLAPS, CHR, x.start, x.stop)
-    
-    
-    
-    
-  }
-  
-  
-  ######################################################################################################################################################################
-  ######################################################################################################################################################################
-  ## overlap 1
-  OVERLAPS <- data.table::foverlaps(OVERLAPS,cnmopsDF, by.x = c("CHR", "x.start", "x.stop"), by.y = c("chromosome", "start", "end"), mult="all",type="any",nomatch=NA, which=FALSE)
-  
-  colnames(OVERLAPS) <- gsub("^start$","cnmops_START",colnames(OVERLAPS))
-  colnames(OVERLAPS) <- gsub("^end$","cnmops_STOP",colnames(OVERLAPS))
-  # colnames(OVERLAPS) <- gsub("^CALLER$","cnmops_CALLER",colnames(OVERLAPS))
-  
-  data.table::setkey(OVERLAPS, CHR, x.start, x.stop)
-  
-  
-  ## overlap 2 
-  OVERLAPS <- data.table::foverlaps(OVERLAPS,exomedepthDF, by.x = c("CHR", "x.start", "x.stop"), by.y = c("chromosome", "start", "end"), mult="all",type="any",nomatch=NA, which=FALSE)
-  
-  colnames(OVERLAPS) <- gsub("^start$","exomedepth_START",colnames(OVERLAPS))
-  colnames(OVERLAPS) <- gsub("^end$","exomedepth_STOP",colnames(OVERLAPS))
-  # colnames(OVERLAPS) <- gsub("^CALLER$","exomedepth_CALLER",colnames(OVERLAPS))
-  
-  data.table::setkey(OVERLAPS, CHR, x.start, x.stop)
-  
-  
-  ## overlap 3 
-  OVERLAPS <- data.table::foverlaps(OVERLAPS,panelcnmopsDF, by.x = c("CHR", "x.start", "x.stop"), by.y = c("chromosome", "start", "end"), mult="all",type="any",nomatch=NA, which=FALSE)
-  
-  colnames(OVERLAPS) <- gsub("^start$","panelcnmops_START",colnames(OVERLAPS))
-  colnames(OVERLAPS) <- gsub("^end$","panelcnmops_STOP",colnames(OVERLAPS))
-  # colnames(OVERLAPS) <- gsub("^CALLER$","panelcnmops_CALLER",colnames(OVERLAPS))
-  
-  data.table::setkey(OVERLAPS, CHR, x.start, x.stop)
-  
-  ## ## ## 
-  
-  ## select NEW START as maximal (the most rigth) STOP as minimal (the most left) coordinates
-  OVERLAPS <- OVERLAPS[, START := do.call(pmax, c(.SD, list(na.rm=TRUE)) ), .SDcols = grep("_START$", names(OVERLAPS))]
-  OVERLAPS <- OVERLAPS[, STOP := do.call(pmin, c(.SD, list(na.rm=TRUE)) ), .SDcols = grep("_STOP$", names(OVERLAPS))]
-  OVERLAPS <- OVERLAPS[, LENGTH := STOP-START]
-  
-  # treat not mutually overlapped regions
-  OVERLAPS[, START := ifelse(LENGTH<=0,  x.start , START)]
-  OVERLAPS[, STOP := ifelse(LENGTH<=0,  x.stop , STOP)]
-  OVERLAPS[, mutualOverlap := ifelse(LENGTH>0,  "yes" , "no")]
-  OVERLAPS <- OVERLAPS[, LENGTH := STOP-START]
-  
-  
-  ######################################################################################################################################################################
-  ######################################################################################################################################################################
 
-  
-  OVERLAPS$Callers <- ""
-  OVERLAPS$CallersNum <- 0
-  for (j in 1:nrow(OVERLAPS)){
-    callers=""
-    if(!is.na(OVERLAPS$cnmops_CALLER[j])){callers <- paste(callers,"cnmops",sep = ";")} # append to callers string
-    if(!is.na(OVERLAPS$exomedepth_CALLER[j])){callers <- paste(callers,"exomedepth",sep = ";")} # append to callers string
-    if(!is.na(OVERLAPS$panelcnmops_CALLER[j])){callers <- paste(callers,"panelcnmops",sep = ";")} # append to callers string
-    
-    callers <- gsub("^;","",callers)
-    OVERLAPS$Callers[j] <- callers
-    
-    OVERLAPS$CallersNum[j] <- sapply(strsplit(callers, ";"), length)
-    
-  }
-  
-  OVERLAPS <- OVERLAPS[mutualOverlap=="yes",]
-  
   setDT(OVERLAPS)
-  OVERLAPS <- OVERLAPS[,c("cnmops_CALLER","exomedepth_CALLER","panelcnmops_CALLER",
-                          "panelcnmops_START","panelcnmops_STOP","exomedepth_START","exomedepth_STOP",
-                          "cnmops_START","cnmops_STOP",
-                          "x.start","x.stop","mutualOverlap") :=NULL 
-                       ]
-  
-  ######################################################################################################################################################################
-  ######################################################################################################################################################################
-  # CN processing
-  
-  # exomedepth CN numbers
-  OVERLAPS$exomedepth_Type <- ""
-  OVERLAPS[OVERLAPS$exomedepth_CN==0,"exomedepth_Type"] <- "DEL"
-  OVERLAPS[OVERLAPS$exomedepth_CN==10,"exomedepth_Type"] <- "DUP"
-  OVERLAPS[,exomedepth_CN:=NULL]
-  
-  OVERLAPS$cnmops_Type <- ""
-  OVERLAPS[OVERLAPS$cnmops_CN<2,"cnmops_Type"] <- "DEL"
-  OVERLAPS[OVERLAPS$cnmops_CN>2,"cnmops_Type"] <- "DUP"
-  OVERLAPS[,cnmops_CN:=NULL]
-  
-  OVERLAPS$panelcnmops_Type <- ""
-  OVERLAPS[OVERLAPS$panelcnmops_CN<2,"panelcnmops_Type"] <- "DEL"
-  OVERLAPS[OVERLAPS$panelcnmops_CN>2,"panelcnmops_Type"] <- "DUP"
-  OVERLAPS[,panelcnmops_CN:=NULL]
-  
-  j=1
-  #
-  OVERLAPS$CNVtype <- ""
-  for (j in 1:nrow(OVERLAPS)){
-    
-    # vector of cnv types
-    types <- paste(OVERLAPS$exomedepth_Type[j],OVERLAPS$cnmops_Type[j],OVERLAPS$panelcnmops_Type[j],sep=";")
-    x <- unlist(strsplit(types, ";"))
-    x <- x[!x==""]
-    # return the most frequent one
-    OVERLAPS$CNVtype[j] <- names(sort(table(x),decreasing=TRUE,useNA = "no")[1])
-    
-    #
-    # OVERLAPS[is.na(OVERLAPS$CNVtype) & OVERLAPS$panCNMOPS<2 & OVERLAPS$CNMOPS<2  ,"CNVtype"] <- "DEL"
-    # OVERLAPS[is.na(OVERLAPS$CNVtype) & OVERLAPS$panCNMOPS>2 & OVERLAPS$CNMOPS>2  ,"CNVtype"] <- "DUP"
-    
-  }
-  
-  # names(OVERLAPS)
-  setDT(OVERLAPS)
-  OVERLAPS <- OVERLAPS[,c("exomedepth_Type","cnmops_Type","panelcnmops_Type") :=NULL ]
+  OVERLAPS <- all_results[,c("CHR","START","STOP","CNVlength","CNVtype","n_CALLERS","CALLERS","CN_cnvkit","CN_cnmops","CN_pcnmops")]
   BED <- OVERLAPS[,c("CHR","START","STOP","CNVtype")]
-  #######################################################################################################################
-  dir.create(file.path(getwd(),dirname(bed)), recursive = TRUE)
-  write.table(BED, file=bed, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE )
-  write.table(OVERLAPS, file=tsv, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE )
+  
+  ##############################################################################
+  dir.create(file.path(getwd(), dirname(output_bed)), recursive = TRUE, showWarnings = FALSE)
+  write.table(BED, file=output_bed, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE )
+  write.table(OVERLAPS, file=output_tsv, sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE )
   
 }
 

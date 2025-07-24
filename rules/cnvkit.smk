@@ -16,7 +16,7 @@ rule cnvkit_prepare_region_beds:
         antitarget=re.sub(r"\.bed$", ".antitarget.bed", os.path.basename(config["bed_file"])),
     log:
         "logs/cnvkit_prepare_reference/prepare_reference_1.log", 
-    threads: workflow.cores
+    threads: 20
     conda:
         "../wrappers/cnvkit/env.yaml"
     shell:
@@ -98,7 +98,7 @@ rule cnvkit_prepare_reference:
         scope=config["bed_file"]
     log:
         "logs/all_samples/cnvkit_prepare_reference.log"
-    threads: workflow.cores
+    threads: 20
     conda:
         "../wrappers/cnvkit/env.yaml"
     script:
