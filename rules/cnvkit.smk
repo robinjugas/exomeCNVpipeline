@@ -365,7 +365,7 @@ rule cnvkit_scatter:
         cns="variant_calls/{sample}/cnvkit/CNV_calls.cns",
         cnr="variant_calls/{sample}/cnvkit/fixed_cov.cnr",
     output:
-        plot="variant_calls/{sample}/cnvkit/cnvkit_scatter.png",
+        plot="variant_calls/{sample}/cnvkit/{sample}_cnvkit_scatter.png",
     params:
         extra=" --fig-size 18 6 --trend",
         sample="{sample}"

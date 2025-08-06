@@ -101,5 +101,5 @@ rule all:
         calls=expand("variant_calls/{sample}/cnvkit/CNV_calls.cns", sample=SAMPLES_LIST),
         TSVs=expand("variant_calls/{sample}/cnvkit/cnvkit_CNV_{sample}.tsv", sample=SAMPLES_LIST),
         GENES=expand("variant_calls/{sample}/cnvkit/trusted-genes.txt", sample=SAMPLES_LIST),
-        SCATTER=expand("variant_calls/{sample}/cnvkit/cnvkit_scatter.png", sample=SAMPLES_LIST),
+        SCATTER=expand("variant_calls/{sample}/cnvkit/{sample}_cnvkit_scatter.png", sample=SAMPLES_LIST),
         heatmap="variant_calls/all_samples/cnvkit_heatmap.png"
